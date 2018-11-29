@@ -83,6 +83,7 @@ class EndPoint extends API{
       $data = Driver::get("status_id",1);
     }elseif($this->method == 'GET' && isset($this->verb) && count($this->args)){
       //get with args
+      $this->_parseDriverArgs();
     }elseif($this->method == 'POST' && !isset($this->verb)){
       //create
       throw new \Exception('Cannot POST here.');
@@ -270,18 +271,25 @@ class EndPoint extends API{
   }
   protected function _parseDriverArgs(){
     $data = null;
+    $driver = new Driver($this->verb);
     switch(strtolower($this->args[0])){
       case "notifications":
+        $data = $driver->getNotifications();
       break;
       case "responses":
+        $data = $driver->getResponses();
       break;
       case "labor":
+        $data = $driver->getLumpers();
       break;
       case "shipments":
+        $data = $driver->getshipments($this->args[1]);
       break;
       case "settlements":
+        $data = $driver->getSettlements();
       break;
       case "dispatchers":
+        $data = $driver->getDispatchers();
       break;
       default:
         throw new \Exception('Invalid Argument');
@@ -292,7 +300,7 @@ class EndPoint extends API{
 
 
 
-require_once '/srv/www/htdocs/classes/movestar/agentTranslation.php';
+/*require_once '/srv/www/htdocs/classes/movestar/agentTranslation.php';
 
 class EndPoint extends API{
 
@@ -374,7 +382,7 @@ class EndPoint extends API{
         return $endPoint->returnVal;
     }
     protected function upload(){}
-}
+}*/
 
 
 class DriverEndPoint{
