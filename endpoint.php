@@ -83,7 +83,7 @@ class EndPoint extends API{
       $data = Driver::get("status_id",1);
     }elseif($this->method == 'GET' && isset($this->verb) && count($this->args)){
       //get with args
-      $this->_parseDriverArgs();
+      $data = $this->_parseDriverArgs();
     }elseif($this->method == 'POST' && !isset($this->verb)){
       //create
       throw new \Exception('Cannot POST here.');
