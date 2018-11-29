@@ -19,6 +19,9 @@ require_once __DIR__ . '/../ms_core/models/ops/Shipment.php';
 require_once __DIR__ . '/../ms_core/models/ops/Agent.php';
 require_once __DIR__ . '/../ms_core/models/ops/Contact.php';
 require_once __DIR__ . '/../ms_core/models/ops/Driver.php';
+require_once __DIR__ . '/../ms_core/models/ops/Lumper.php';
+require_once __DIR__ . '/../ms_core/models/ops/Dispatcher.php';
+require_once __DIR__ . '/../ms_core/models/billing/Vendor.php';
 
 class EndPoint extends API{
 
@@ -100,15 +103,20 @@ class EndPoint extends API{
     $data = null;
     if($this->method == 'GET' && isset($this->verb) && !count($this->args)){
       //get specific
+      $data = new Lumper($this->verb);
     }elseif($this->method == 'GET' && !isset($this->verb)){
       //get all
+      $data = Lumper::get('status_id',1);
     }elseif($this->method == 'GET' && isset($this->verb) && count($this->args)){
       //get with args
+      throw new \Exception('No arg support');
     }elseif($this->method == 'POST' && !isset($this->verb)){
       //create
       throw new \Exception('Cannot POST here.');
     }elseif($this->method == 'PUT' && isset($this->verb)){
       //update
+      $data = new Lumper($this->verb);
+      $data->setFields($this->file)->update();
     }else{
       throw new \Exception('Unsupported request');
     }
@@ -116,17 +124,19 @@ class EndPoint extends API{
   }
   protected function dispatch(){
     $data = null;
-    if($this->method == 'GET' && isset($this->verb) && !count($this->args)){
+    if($this->method == 'GET' && count($this->args)){
       //get specific
-    }elseif($this->method == 'GET' && !isset($this->verb)){
+      $data = new Dispatcher($this->args[0]);
+    }elseif($this->method == 'GET' && !isset($this->verb) && !count($this->args)){
       //get all
-    }elseif($this->method == 'GET' && isset($this->verb) && count($this->args)){
-      //get with args
+      $data = Dispatcher::get("status_id",1);
     }elseif($this->method == 'POST' && !isset($this->verb)){
       //create
       throw new \Exception('Cannot POST here.');
     }elseif($this->method == 'PUT' && isset($this->verb)){
       //update
+      $data = new Dispatcher($this->args[0]);
+      $data->setFields($this->file)->update();
     }else{
       throw new \Exception('Unsupported request');
     }
@@ -134,17 +144,19 @@ class EndPoint extends API{
   }
   protected function vendor(){
     $data = null;
-    if($this->method == 'GET' && isset($this->verb) && !count($this->args)){
+    if($this->method == 'GET' && count($this->args)){
       //get specific
-    }elseif($this->method == 'GET' && !isset($this->verb)){
+      $data = new Vendor($this->args[0]);
+    }elseif($this->method == 'GET' && !isset($this->verb) && !count($this->args)){
       //get all
-    }elseif($this->method == 'GET' && isset($this->verb) && count($this->args)){
-      //get with args
+      $data = Vendor::get("status_id",1);
     }elseif($this->method == 'POST' && !isset($this->verb)){
       //create
       throw new \Exception('Cannot POST here.');
     }elseif($this->method == 'PUT' && isset($this->verb)){
       //update
+      $data = new Vendor($this->args[0]);
+      $data->setFields($this->file)->update();
     }else{
       throw new \Exception('Unsupported request');
     }
@@ -163,7 +175,7 @@ class EndPoint extends API{
       throw new \Exception('Cannot POST here.');
     }elseif($this->method == 'PUT' && isset($this->verb)){
       //update
-      $data = new Contact($this->verb);
+      $data = new Contact($this->args[0]);
       $data->setFields($this->file)->update();
     }else{
       throw new \Exception('Unsupported request');
@@ -384,275 +396,6 @@ class EndPoint extends API{
     protected function upload(){}
 }*/
 
-
-class DriverEndPoint{
-
-    public $verb;
-    public $args;
-    public $request;
-    public $driver;
-    public $returnVal;
-    private $driver_id;
-
-    public function __construct($verb,$args = null, $request = null)
-    {
-        $this->verb = $verb;
-        $this->args = $args;
-        $this->driver_id = $this->args[0];
-        $this->request = $request;
-        $this->driver = new Driver($this->driver_id);
-        $this->switchVerb();
-    }
-    private function switchVerb(){
-        switch ($this->verb){
-            case "get":
-                $this->getWhat();
-                break;
-            case "create":
-                $this->driver->setFields($this->request)->create();
-                $this->returnVal = $this->driver;
-                break;
-            case "update":
-                $this->driver->setFields($this->request)->update();
-                $this->returnVal = $this->driver;
-                break;
-            default:
-                throw new Exception('Unsupported Verb');
-        }
-        return $this;
-    }
-    private function getWhat(){
-        if(count($this->args) <= 1){
-            $this->returnVal = $this->driver;
-        }else{
-            switch ($this->args[1]){
-                case "notifications":
-                    $this->returnVal = $this->driver->getNotifications();
-                    break;
-                case "responses":
-                    $this->returnVal = $this->driver->getResponses();
-                    break;
-                case "lumpers":
-                    $this->returnVal = $this->driver->getLumpers();
-                    break;
-                case "shipments":
-                    $this->returnVal = $this->driver->getActiveShipments();
-                    break;
-                case "shipmentHistory":
-                    $this->returnVal = $this->driver->getArchiveShipments();
-                    break;
-                case "settlements":
-                    $this->returnVal = $this->driver->getSettlements();
-                    break;
-                case "dispatchers":
-                    $this->returnVal = $this->driver->getDispatchers();
-                    break;
-                default:
-                    throw new Exception('Unsupported Argument');
-            }
-        }
-        return $this;
-    }
-}
-class VendorEndPoint{
-
-    public $verb;
-    public $args;
-    public $request;
-    public $vendor;
-    public $returnVal;
-    private $vendor_number;
-
-    public function __construct($verb,$args = null, $request = null)
-    {
-        $this->verb = $verb;
-        $this->args = $args;
-        $this->vendor_number = $this->args[0];
-        $this->request = $request;
-        $this->vendor = new Vendor($this->vendor_number);
-        $this->switchVerb();
-    }
-    private function switchVerb(){
-        switch ($this->verb){
-            case "get":
-                $this->getWhat();
-                break;
-            case "create":
-                $this->vendor->setFields($this->request)->create();
-                $this->returnVal = $this->vendor;
-                break;
-            case "update":
-                $this->vendor->setFields($this->request)->update();
-                $this->returnVal = $this->vendor;
-                break;
-            default:
-                throw new Exception('Unsupported Verb');
-        }
-        return $this;
-    }
-    private function getWhat(){
-        if(count($this->args) <= 1){
-            $this->returnVal = $this->vendor;
-        }else{
-            switch ($this->args[1]){
-                case "epayImages":
-                    $this->returnVal = $this->vendor->getEpayImages();
-                    break;
-                case "ach":
-                    $this->returnVal = $this->vendor->getAchInfo();
-                    break;
-                default:
-                    throw new Exception('Unsupported Argument');
-            }
-        }
-        return $this;
-    }
-
-}
-class LumperEndPoint{
-
-    public $verb;
-    public $args;
-    public $request;
-    public $lumper;
-    public $returnVal;
-    private $lumper_id;
-
-    public function __construct($verb,$args = null, $request = null)
-    {
-        $this->verb = $verb;
-        $this->args = $args;
-        $this->lumper_id = $this->args[0];
-        $this->request = $request;
-        $this->lumper = new Lumper($this->lumper_id);
-        $this->switchVerb();
-    }
-    private function switchVerb(){
-        switch ($this->verb){
-            case "get":
-                $this->getWhat();
-                break;
-            case "create":
-                $this->lumper->setFields($this->request)->create();
-                $this->returnVal = $this->lumper;
-                break;
-            case "update":
-                $this->lumper->setFields($this->request)->update();
-                $this->returnVal = $this->lumper;
-                break;
-            default:
-                throw new Exception('Unsupported Verb');
-        }
-        return $this;
-    }
-    private function getWhat(){
-        if(count($this->args) <= 1){
-            $this->returnVal = $this->lumper;
-        }else{
-            switch($this->args[1]){
-                default:
-                    throw new Exception('Unsupported Argument');
-            }
-        }
-        return $this;
-    }
-}
-class DispatchEndPoint{
-
-    public $verb;
-    public $args;
-    public $request;
-    public $dispatcher;
-    public $returnVal;
-    private $id;
-
-    public function __construct($verb,$args = null, $request = null)
-    {
-        $this->verb = $verb;
-        $this->args = $args;
-        $this->request = $request;
-        $this->id = $this->args[0];
-        $this->dispatcher = new Dispatcher($this->id);
-        $this->switchVerb();
-    }
-    private function switchVerb(){
-        switch($this->verb){
-            case "get":
-                $this->getWhat();
-                break;
-            case "create":
-                $this->dispatcher->setFields($this->request)->create();
-                $this->returnVal = $this->dispatcher;
-                break;
-            case "update":
-                $this->dispatcher->setFields($this->request)->update();
-                $this->returnVal = $this->dispatcher;
-                break;
-            default:
-                throw new Exception('Unsupported Verb');
-        }
-        return $this;
-    }
-    private function getWhat(){
-        if(count($this->args) <= 1){
-            $this->returnVal = $this->dispatcher;
-        }else{
-            switch($this->args[1]){
-                default:
-                    throw new Exception('Unsupported Argument');
-            }
-        }
-        return $this;
-    }
-}
-class ContactEndPoint{
-
-    public $verb;
-    public $args;
-    public $request;
-    public $contact;
-    public $returnVal;
-    private $id;
-
-    public function __construct($verb,$args = null, $request = null)
-    {
-        $this->verb = $verb;
-        $this->args = $args;
-        $this->id = $this->args[0];
-        $this->request = $request;
-        $this->contact = new Contact($this->id);
-        $this->switchVerb();
-    }
-    private function switchVerb(){
-        switch($this->verb){
-            case "get":
-                $this->getWhat();
-                break;
-            case "create":
-                $this->contact->setFields($this->request)->create();
-                $this->returnVal = $this->contact;
-                break;
-            case "update":
-                $this->contact->setFields($this->request)->update();
-                $this->returnVal = $this->contact;
-                break;
-            default:
-                throw new Exception('Unsupported Verb');
-        }
-        return $this;
-    }
-    private function getWhat(){
-        if(count($this->args) <= 1){
-            $this->returnVal = $this->contact;
-        }else{
-            switch($this->args[1]){
-                default:
-                    throw new Exception('Unsupported Argument');
-            }
-        }
-        return $this;
-    }
-}
 class UtilityEndPoint{
 
     public $verb;
