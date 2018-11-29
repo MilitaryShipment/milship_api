@@ -1,19 +1,5 @@
 <?php
 
-// require_once '/srv/www/htdocs/classes/API/agent.php';
-// require_once '/srv/www/htdocs/classes/API/vendor.php';
-// require_once '/srv/www/htdocs/classes/API/driver.php';
-// require_once '/srv/www/htdocs/classes/API/lumper.php';
-// require_once '/srv/www/htdocs/classes/API/dispatcher.php';
-// require_once '/srv/www/htdocs/classes/API/contact.php';
-// require_once '/srv/www/htdocs/classes/API/shipment.php';
-// require_once '/srv/www/htdocs/classes/API/utility.php';
-// require_once '/srv/www/htdocs/classes/API/auth.php';
-// require_once '/srv/www/htdocs/classes/API/tonnage.php';
-// require_once '/srv/www/htdocs/classes/API/invoice.php';
-// require_once '/srv/www/htdocs/classes/API/cog.php';
-
-
 require_once __DIR__ . '/api.php';
 require_once __DIR__ . '/../ms_core/models/ops/Shipment.php';
 require_once __DIR__ . '/../ms_core/models/ops/Agent.php';
@@ -225,6 +211,9 @@ class EndPoint extends API{
       case "driver":
         $data = $shipment->getDriver();
       break;
+      case "militaryhousing":
+        $data = $shipment->isMilitaryHousing($this->args[1]);
+      break;
       default:
         throw new \Exception('Invalid Argument');
     }
@@ -310,91 +299,6 @@ class EndPoint extends API{
   }
 }
 
-
-
-/*require_once '/srv/www/htdocs/classes/movestar/agentTranslation.php';
-
-class EndPoint extends API{
-
-    public function __construct($request,$origin)
-    {
-        parent::__construct($request);
-    }
-    protected function example(){
-        return array("endPoint"=>$this->endpoint,"verb"=>$this->verb,"args"=>$this->args,"request"=>$this->request);
-    }
-    protected function shipment(){
-        $data = null;
-        if($this->method == 'GET' && isset($this->verb)){
-          //get specific shipment
-          $data = new Shipment($this->verb);
-        }elseif($this->method == 'GET' && !isset($this->verb)){
-          //get all
-          $data = Shipment::get("status_id",1,"active");
-        }elseif($this->method == 'POST' && !isset($this->verb)){
-          //create
-          throw new \Exception('Cannot POST here.');
-        }elseif($this->method == 'PUT' && isset($this->verb)){
-          //update
-          $data = new Shipment($this->verb);
-          $data->setFields($this->file)->update();
-        }else{
-          throw new \Exception('Unsupported request');
-        }
-        return $data;
-    }
-    protected function auth(){
-        $endPoint = new AuthEndPoint($this->verb,$this->args,$this->request);
-        return $endPoint->returnVal;
-    }
-    protected function agents(){
-        $endPoint = new AgentEndPoint($this->verb,$this->args,$this->request);
-        return $endPoint->returnVal;
-    }
-    protected function vendors(){
-        $endPoint = new VendorEndPoint($this->verb,$this->args,$this->request);
-        return $endPoint->returnVal;
-    }
-    protected function drivers(){
-        $endPoint = new DriverEndPoint($this->verb,$this->args,$this->request);
-        return $endPoint->returnVal;
-    }
-    protected function lumpers(){
-        $endPoint = new LumperEndPoint($this->verb,$this->args,$this->request);
-        return $endPoint->returnVal;
-    }
-    protected function dispatchers(){
-        $endPoint = new DispatchEndPoint($this->verb,$this->args,$this->request);
-        return $endPoint->returnVal;
-    }
-    protected function contacts(){
-        $endPoint = new ContactEndPoint($this->verb,$this->args,$this->request);
-        return $endPoint->returnVal;
-    }
-    protected function tonnage(){
-        $endPoint = new TonnageEndPoint($this->verb,$this->args,$this->request);
-        return $endPoint->returnVal;
-    }
-    protected function invoice(){
-        $endPoint = new InvoiceEndPoint($this->verb,$this->args,$this->request);
-        return $endPoint->returnVal;
-    }
-    protected function cog(){
-        switch ($this->verb){
-            case "get":
-                $c = new Cog($this->args[0]);
-                break;
-            default:
-                throw new Exception('Unsupported Verb');
-        }
-        return $c;
-    }
-    protected function util(){
-        $endPoint = new UtilityEndPoint($this->verb,$this->args,$this->request);
-        return $endPoint->returnVal;
-    }
-    protected function upload(){}
-}*/
 
 class UtilityEndPoint{
 
