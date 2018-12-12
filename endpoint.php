@@ -9,6 +9,8 @@ require_once __DIR__ . '/../ms_core/models/ops/Lumper.php';
 require_once __DIR__ . '/../ms_core/models/ops/Dispatcher.php';
 require_once __DIR__ . '/../ms_core/models/billing/Vendor.php';
 
+require_once __DIR__ . '/../ms_core/processes/traffic/AgentLoad.php';
+
 class EndPoint extends API{
 
   public function __construct($request,$origin){
@@ -168,6 +170,19 @@ class EndPoint extends API{
     }
     return $data;
   }
+  protected function traffic(){
+    $data = null;
+    if($this->method == 'GET'){
+      throw new \Exception('Cannot GET here.');
+    }elseif($this->method == 'PUT'){
+      throw new \Exception('Cannot PUT here.');
+    }elseif($this->method == 'POST' && !isset($this->verb)){
+      throw new \Exception('No Process Specified.');
+    }else{
+      $data = $this->_parseTrafficVerb();
+    }
+    return $data;
+  }
   protected function _parseShipmentArgs(){
     $shipment = new Shipment($this->verb);
     $data = null;
@@ -291,6 +306,20 @@ class EndPoint extends API{
       break;
       case "dispatchers":
         $data = $driver->getDispatchers();
+      break;
+      default:
+        throw new \Exception('Invalid Argument');
+    }
+    return $data;
+  }
+  protected function _parseTrafficVerb(){
+    $data = null;
+    switch(strtolower($this->verb)){
+      case "agentload":
+        $proc = new AgentLoad($this->args[0],$this->request->at_agent_eta_early,$this->request->at_agent_eta_late,$this->request->load_eta_early_time,$this->request->load_eta_late_time);
+        $data = $proc->response;
+      break;
+      case "vanoperator":
       break;
       default:
         throw new \Exception('Invalid Argument');
