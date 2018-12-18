@@ -12,6 +12,8 @@ require_once __DIR__ . '/../../classes/milship_core/models/ops/Dispatcher.php';
 require_once __DIR__ . '/../../classes/milship_core/models/billing/Vendor.php';
 require_once __DIR__ . '/../../classes/milship_core/models/ops/tonnage/TonnageShipment.php';
 require_once __DIR__ . '/../../classes/milship_core/models/ops/tonnage/TonnageList.php';
+require_once __DIR__ . '/../../classes/milship_core/models/ops/tonnage/TonnageRef.php';
+require_once __DIR__ . '/../../classes/milship_core/models/ops/tonnage/TonnageRequest.php';
 require_once __DIR__ . '/../../classes/milship_core/processes/traffic/AgentLoad.php';
 require_once __DIR__ . '/../../classes/milship_core/processes/traffic/VanOperator.php';
 
@@ -25,7 +27,8 @@ require_once __DIR__ . '/../../classes/milship_core/processes/traffic/VanOperato
 // require_once __DIR__ . '/../ms_core/models/billing/Vendor.php';
 // require_once __DIR__ . '/../ms_core/models/ops/tonnage/TonnageShipment.php';
 // require_once __DIR__ . '/../ms_core/models/ops/tonnage/TonnageList.php';
-//
+// require_once __DIR__ . '/../ms_core/models/ops/tonnage/TonnageRef.php';
+// require_once __DIR__ . '/../ms_core/models/ops/tonnage/TonnageRequest.php';
 // require_once __DIR__ . '/../ms_core/processes/traffic/AgentLoad.php';
 // require_once __DIR__ . '/../ms_core/processes/traffic/VanOperator.php';
 
@@ -204,7 +207,8 @@ class EndPoint extends API{
   protected function tonnage(){
     $data = null;
     if(!isset($this->verb) && !isset($this->args[0]) && $this->method == 'POST'){ //create
-        throw new \Exception('POSTING is not allowed.');
+        $request = new TonnageRequest($this->request->user,$this->request->loads);
+        $data = $this->request;
     }elseif(!isset($this->verb) && !isset($this->args[0]) && $this->method == 'GET'){ //get all
         $list = new TonnageList();
         $shipments = array();
@@ -219,7 +223,7 @@ class EndPoint extends API{
     }elseif((int)$this->args[0] && $this->method == 'PUT'){ //update by id
         throw new \Exception('Update currently not allowed.');
     }elseif(isset($this->verb)){
-        $data = $this->_parseTonnageArgs();
+        $data = $this->_parseTonnageVerb();
     }else{
         throw new \Exception('Malformed Request');
     }
@@ -365,6 +369,52 @@ class EndPoint extends API{
       case "vanoperator":
         $proc = new VanOperator($this->args[0],$this->request);
         $data = $proc->response;
+      break;
+      default:
+        throw new \Exception('Invalid Argument');
+    }
+    return $data;
+  }
+  protected function _parseTonnageVerb(){
+    $data = null;
+    switch(strtolower($this->verb)){
+      case "asap":
+        $shipment = new TonnageShipment($this->args[0]);
+        $shipment->isAsap = $shipment->isAsap ? 0 : 1;
+        $shipment->update;
+        $data = $shipment;
+      break;
+      case "search":
+        try{
+          $search = new TonnageSearch($this->request->key,$this->request->values);
+          $data = $s->search();
+        }catch(\Exception $e){
+          $data = array();
+        }
+      break;
+      case "nearorigin":
+        try{
+          $ref = new TonangeRef($this->args[0]);
+          $data = (count($ref->near_origin) && $ref->near_origin[0] != '') ? $ref->buildShipments($ref->near_origin) : array();
+        }catch(\Exception $e){
+          $data = array();
+        }
+      break;
+      case "neardest":
+        try{
+          $ref = new TonnageRef($this->args[0]);
+          $data = (count($ref->near_destination) && $ref->near_destination[0] != '') ? $ref->buildShipments($ref->near_destination) : array();
+        }catch(\Exception $e){
+          $data = array();
+        }
+      break;
+      case "ontheway":
+        try{
+          $ref = new TonnageRef($this->args[0]);
+          $data = (count($ref->on_the_way) && $ref->on_the_way[0] != '') ? $ref->buildShipments($ref->on_the_way) : array();
+        }catch(\Exception $e){
+          $data = array();
+        }
       break;
       default:
         throw new \Exception('Invalid Argument');
