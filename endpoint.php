@@ -10,8 +10,8 @@ require_once __DIR__ . '/../../classes/milship_core/models/ops/Driver.php';
 require_once __DIR__ . '/../../classes/milship_core/models/ops/Lumper.php';
 require_once __DIR__ . '/../../classes/milship_core/models/ops/Dispatcher.php';
 require_once __DIR__ . '/../../classes/milship_core/models/billing/Vendor.php';
-require_once __DIR__ . '/../../classes/ms_core/models/ops/tonnage/TonnageShipment.php';
-require_once __DIR__ . '/../../classes/ms_core/models/ops/tonnage/TonnageList.php';
+require_once __DIR__ . '/../../classes/milship_core/models/ops/tonnage/TonnageShipment.php';
+require_once __DIR__ . '/../../classes/milship_core/models/ops/tonnage/TonnageList.php';
 require_once __DIR__ . '/../../classes/milship_core/processes/traffic/AgentLoad.php';
 require_once __DIR__ . '/../../classes/milship_core/processes/traffic/VanOperator.php';
 
