@@ -10,6 +10,7 @@ require_once __DIR__ . '/../ms_core/models/ops/Dispatcher.php';
 require_once __DIR__ . '/../ms_core/models/billing/Vendor.php';
 
 require_once __DIR__ . '/../ms_core/processes/traffic/AgentLoad.php';
+require_once __DIR__ . '/../ms_core/processes/traffic/VanOperator.php';
 
 class EndPoint extends API{
 
@@ -320,6 +321,8 @@ class EndPoint extends API{
         $data = $proc->response;
       break;
       case "vanoperator":
+        $proc = new VanOperator($this->args[0],$this->request);
+        $data = $proc->response;
       break;
       default:
         throw new \Exception('Invalid Argument');
