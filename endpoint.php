@@ -8,6 +8,8 @@ require_once __DIR__ . '/../ms_core/models/ops/Driver.php';
 require_once __DIR__ . '/../ms_core/models/ops/Lumper.php';
 require_once __DIR__ . '/../ms_core/models/ops/Dispatcher.php';
 require_once __DIR__ . '/../ms_core/models/billing/Vendor.php';
+require_once __DIR__ . '/../ms_core/models/ops/tonnage/TonnageShipment.php';
+require_once __DIR__ . '/../ms_core/models/ops/tonnage/TonnageList.php';
 
 require_once __DIR__ . '/../ms_core/processes/traffic/AgentLoad.php';
 require_once __DIR__ . '/../ms_core/processes/traffic/VanOperator.php';
@@ -184,6 +186,31 @@ class EndPoint extends API{
     }
     return $data;
   }
+  protected function tonnage(){
+    $data = null;
+    if(!isset($this->verb) && !isset($this->args[0]) && $this->method == 'POST'){ //create
+        throw new \Exception('POSTING is not allowed.');
+    }elseif(!isset($this->verb) && !isset($this->args[0]) && $this->method == 'GET'){ //get all
+        $list = new TonnageList();
+        $shipments = array();
+        foreach($list->shipments as $possible){
+          if(strtotime($possible->pickup) < strtotime('15 Jan 2019')){
+            $shipments[] = $possible;
+          }
+        }
+        $data = $shipments;
+    }elseif(!isset($this->verb) &&(int)$this->args[0] && $this->method == 'GET'){ //get by id
+        $data = new TonnageShipment($this->args[0]);
+    }elseif((int)$this->args[0] && $this->method == 'PUT'){ //update by id
+        throw new \Exception('Update currently not allowed.');
+    }elseif(isset($this->verb)){
+        $data = $this->_parseTonnageArgs();
+    }else{
+        throw new \Exception('Malformed Request');
+    }
+    return $data;
+  }
+
   protected function _parseShipmentArgs(){
     $shipment = new Shipment($this->verb);
     $data = null;
@@ -457,97 +484,6 @@ class AuthEndPoint{
             default:
                 throw new Exception('Unsupported Argument');
         }
-    }
-}
-class TonnageEndPoint{
-
-    public $verb;
-    public $args;
-    public $request;
-    public $returnVal;
-
-    public function __construct($verb,$args = null, $request = null)
-    {
-        $this->verb = $verb;
-        $this->args = $args;
-        $this->request = $request;
-        $this->switchVerb();
-    }
-    private function switchVerb(){
-        switch($this->verb){
-            case "get":
-                if(!isset($this->args[0])){
-                    $list = new TonnageList();
-                    $this->returnVal = $list->shipments;
-                }elseif(!(int)$this->args[0]){
-                    throw new Exception('Invalid Tonnage ID');
-                }else{
-                    $this->returnVal = new TonnageShipment($this->args[0]);
-                }
-                break;
-            case "request":
-                $request = new TonnageRequest($this->request->user,$this->request->loads);
-                $this->returnVal = $this->request;
-                break;
-            case "ua":
-                $this->returnVal = $this->request;
-//                $this->returnVal = getallheaders();
-                break;
-            case "search":
-                try{
-                    $s = new TonnageSearch($this->request->key,$this->request->values);
-                    $this->returnVal = $s->search();
-                }catch(Exception $e){
-                    $this->returnVal = array();
-//                    $this->returnVal = $e->getMessage();
-                }
-                break;
-            case "nearOrigin":
-                try{
-                    $ref = new TonnageRef($this->args[0]);
-                    $this->returnVal = (count($ref->near_origin) && $ref->near_origin[0] != '') ? $ref->buildShipments($ref->near_origin) : array();
-                }catch(Exception $e){
-                    $this->returnVal = array();
-//                    $this->returnVal = $e->getMessage();
-                }
-                break;
-            case "nearDest":
-                try{
-                    $ref = new TonnageRef($this->args[0]);
-                    $this->returnVal = (count($ref->near_destination) && $ref->near_destination[0] != '') ? $ref->buildShipments($ref->near_destination) : array();
-                }catch(Exception $e){
-                    $this->returnVal = array();
-//                    $this->returnVal = $e->getMessage();
-                }
-                break;
-            case "ontheway":
-                try{
-                    $ref = new TonnageRef($this->args[0]);
-                    $this->returnVal = (count($ref->on_the_way) && $ref->on_the_way[0] != '') ? $ref->buildShipments($ref->on_the_way) : array();
-                }catch(Exception $e){
-                    $this->returnVal = array();
-//                    $this->returnVal = $e->getMessage();
-                }
-                break;
-            case "asap":
-                $shipment = new TonnageShipment($this->args[0]);
-                $shipment->isAsap = $shipment->isAsap ? 0 : 1;
-                $shipment->update();
-                $this->returnVal = $shipment;
-                break;
-            default:
-                throw new Exception('Unsupported Verb');
-        }
-        return $this;
-    }
-    private function getWhat(){
-        switch ($this->args[0]){
-            case "example":
-                break;
-            default:
-                throw new Exception('Unsupported Argument');
-        }
-        return $this;
     }
 }
 class InvoiceEndPoint{
