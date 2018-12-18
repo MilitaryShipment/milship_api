@@ -381,7 +381,7 @@ class EndPoint extends API{
       case "asap":
         $shipment = new TonnageShipment($this->args[0]);
         $shipment->isAsap = $shipment->isAsap ? 0 : 1;
-        $shipment->update;
+        $shipment->update();
         $data = $shipment;
       break;
       case "search":
